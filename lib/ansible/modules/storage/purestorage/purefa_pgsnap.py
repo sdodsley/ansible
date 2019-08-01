@@ -185,7 +185,7 @@ def check_vgroup(module, array):
     vg_exists = False
     api_version = array._list_available_rest_versions()
     if VGROUPS_API_VERSION in api_version:
-        vg_name = module.params["name"].split("/")[0]
+        vg_name = module.params["restore"].split("/")[0]
         try:
             vgs = array.list_vgroups()
         except Exception:
