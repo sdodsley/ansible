@@ -231,7 +231,7 @@ def restore_pgsnapvolume(module, array):
             if get_pgroupvolume(module, array) is None:
                 module.fail_json(msg="Selected restore volume {0} does not exist in the Protection Group".format(module.params['restore']))
         if "/" in module.params['restore'] and not check_vgroup(module, array):
-            module.fail_json(msg="Failed to create volume {0}. Volume Group does not exist.".format(module.params["name"]))
+            module.fail_json(msg="Failed to create volume {0}. Volume Group does not exist.".format(module.params["restore"]))
         volume = module.params['name'] + "." + module.params['suffix'] + "." + module.params['restore']
         try:
             array.copy_volume(volume, module.params['target'], overwrite=module.params['overwrite'])
