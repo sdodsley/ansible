@@ -137,6 +137,7 @@ from ansible.module_utils.pure import get_system, purefa_argument_spec
 
 from datetime import datetime
 
+VGROUPS_API_VERSION = "1.13"
 
 def get_pgroup(module, array):
     """Return Protection Group or None"""
@@ -178,6 +179,25 @@ def get_pgsnapshot(module, array):
     except Exception:
         return None
 
+      
+def check_vgroup(module, array):
+    """Check is the requested VG to create volume in exists"""
+    vg_exists = False
+    api_version = array._list_available_rest_versions()
+    if VGROUPS_API_VERSION in api_version:
+        vg_name = module.params["restore"].split("/")[0]
+        try:
+            vgs = array.list_vgroups()
+        except Exception:
+            module.fail_json(msg="Failed to get volume groups list. Check array.")
+        for vgroup in range(0, len(vgs)):
+            if vg_name == vgs[vgroup]['name']:
+                vg_exists = True
+                break
+    else:
+        module.fail_json(msg="VG volumes are not supported. Please upgrade your FlashArray.")
+    return vg_exists
+
 
 def create_pgsnapshot(module, array):
     """Create Protection Group Snapshot"""
@@ -210,6 +230,8 @@ def restore_pgsnapvolume(module, array):
         else:
             if get_pgroupvolume(module, array) is None:
                 module.fail_json(msg="Selected restore volume {0} does not exist in the Protection Group".format(module.params['restore']))
+        if "/" in module.params['restore'] and not check_vgroup(module, array):
+            module.fail_json(msg="Failed to restore volume {0}. Volume Group does not exist.".format(module.params["restore"]))
         volume = module.params['name'] + "." + module.params['suffix'] + "." + module.params['restore']
         try:
             array.copy_volume(volume, module.params['target'], overwrite=module.params['overwrite'])
